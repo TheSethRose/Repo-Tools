@@ -642,6 +642,7 @@ These repositories would be made private:
 **Issue**: "GITHUB_TOKEN environment variable not set"
 
 **Solution**:
+
 ```bash
 # Check if token is set
 echo $GITHUB_TOKEN
@@ -658,6 +659,7 @@ echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
 **Issue**: "API rate limit exceeded"
 
 **Solution**:
+
 - Wait for rate limit reset (shown in error message)
 - The tool automatically retries with exponential backoff
 - Consider running operations in smaller batches
@@ -667,6 +669,7 @@ echo 'export GITHUB_TOKEN="your_token_here"' >> ~/.zshrc
 **Issue**: Connection timeouts or network errors
 
 **Solution**:
+
 ```bash
 # Test GitHub connectivity
 curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
@@ -683,6 +686,7 @@ python main.py list --help
 **Issue**: "Repository not found" or permission errors
 
 **Solution**:
+
 - Verify your token has `repo` scope
 - Check if repository exists and you have access
 - Ensure token hasn't expired
