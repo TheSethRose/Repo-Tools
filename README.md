@@ -1,41 +1,55 @@
 # GitHub Repository Tools
 
-A collection of Python scripts to manage GitHub repositories using PyGithub and Rich for beautiful terminal output.
+A comprehensive collection of Python scripts to manage GitHub repositories using PyGithub and Rich for beautiful terminal output. These tools help automate common repository management tasks including listing, privacy management, backup, and repository creation.
 
 ## Scripts
 
 ### 1. Repository Listing (`list_repos.py`)
 
-Display a formatted table of your GitHub repositories with key details including:
+Display a formatted table of your GitHub repositories with comprehensive details:
 
 - Repository name and description
 - Primary language
 - Star and fork counts
 - Visibility (public/private)
-- Fork status
+- Fork status with visual indicators
 - Last updated date
 - Automatic sorting by stars (descending), then by last updated date
+- Summary statistics with totals
 
 ### 2. Privacy Manager (`set_repos_private.py`)
 
 Automatically manage repository privacy and clean up forks:
 
 - **Privacy Management**: Set public repositories with zero stars to private
-- **Fork Management**: Identify and optionally delete zero-star forks
-- **Smart Filtering**: Separates regular repos from forks
-- **Safety Features**: Dry-run mode and confirmation prompts
-- **Detailed Preview**: Shows what changes will be made before execution
+- **Fork Management**: Identify and optionally delete zero-star forks with user confirmation
+- **Smart Filtering**: Separates regular repositories from forks for appropriate handling
+- **Safety Features**: Dry-run mode and confirmation prompts for all destructive actions
+- **Detailed Preview**: Shows organized tables of what changes will be made before execution
+- **Error Handling**: Graceful handling of API errors and rate limits
 
 ### 3. Repository Backup (`backup_repos.py`)
 
-Clone/download all your repositories to a local backup directory:
+Clone and backup all your repositories to a local directory:
 
 - **Complete Backup**: Backs up all public and private repositories
-- **Organized Structure**: Separates repos into public/, private/, and forks/ directories
-- **Update Existing**: Updates existing repositories instead of re-cloning
-- **Progress Tracking**: Shows real-time progress with Rich progress bars
-- **Flexible Paths**: Customizable backup directory location
-- **Comprehensive Reporting**: Detailed summary of backup results
+- **Organized Structure**: Separates repos into `public/`, `private/`, and `forks/` directories
+- **Smart Updates**: Updates existing repositories instead of re-cloning
+- **Progress Tracking**: Real-time progress bars with Rich UI
+- **Flexible Paths**: Customizable backup directory location via command line or environment
+- **Dry Run Mode**: Preview what would be backed up without actually cloning
+- **Comprehensive Reporting**: Detailed summary of backup results and statistics
+
+### 4. Repository Creator (`create_github_repo.py`)
+
+Dynamic GitHub repository creation tool with full customization:
+
+- **Interactive Mode**: Prompts for repository details if not provided via command line
+- **Command Line Options**: Full support for all GitHub repository settings
+- **Repository Settings**: Configure privacy, issues, wiki, projects, and auto-initialization
+- **Git Integration**: Automatically set up git remotes for existing projects
+- **Validation**: Checks for existing repositories before creation
+- **Rich Output**: Beautiful terminal interface with status updates and confirmations
 
 ## Features
 
@@ -46,28 +60,6 @@ Clone/download all your repositories to a local backup directory:
 - **Error Handling**: Graceful handling of API errors and rate limits
 - **Progress Tracking**: Real-time progress indication for long-running operations
 
-## Installation
-
-1. Clone this repository:
-
-```bash
-git clone <repository-url>
-cd Repo-Tools
-```
-
-2. Install dependencies using uv:
-
-```bash
-uv pip install -r requirements.txt
-```
-
-3. Set up your GitHub token:
-
-```bash
-cp .env.example .env
-# Edit .env and add your GitHub Personal Access Token
-```
-
 ## Usage
 
 ### 1. List Repositories
@@ -76,15 +68,15 @@ cp .env.example .env
 python list_repos.py
 ```
 
-This displays a table of all your repositories sorted by stars (highest first), then by last updated date. Shows:
+Displays a comprehensive table of all your repositories sorted by stars (highest first), then by last updated date. Shows:
 
 - Repository name and description
 - Primary language
-- Visibility (public/private)
+- Visibility (public/private) with visual indicators
 - Fork status
 - Stars and forks count
 - Last updated date
-- Summary statistics
+- Summary statistics and totals
 
 ### 2. Manage Repository Privacy
 
@@ -95,15 +87,15 @@ python set_repos_private.py
 This script will:
 
 1. Scan all your repositories (public and private)
-2. Separate regular repositories from forks
+2. Separate regular repositories from forks for appropriate handling
 3. Identify public repositories with zero stars
 4. Identify forks with zero stars
-5. Show a preview of changes in organized tables
-6. Ask for confirmation before making changes
+5. Show detailed preview tables of proposed changes
+6. Ask for confirmation before making any changes
 7. Make zero-star public repositories private
-8. Optionally delete zero-star forks (with confirmation)
+8. Optionally delete zero-star forks (with explicit confirmation)
 
-**Note**: The script shows detailed previews before making any changes.
+**Note**: The script provides detailed previews and requires confirmation before making destructive changes.
 
 ### 3. Backup Repositories
 
@@ -123,7 +115,7 @@ Backup to custom location:
 python backup_repos.py --backup-path /path/to/backup
 ```
 
-Dry-run mode (see what would be done without actually cloning):
+Dry-run mode (preview what would be backed up without actually cloning):
 
 ```bash
 python backup_repos.py --dry-run
@@ -131,19 +123,72 @@ python backup_repos.py --dry-run
 
 This script will:
 
-1. Create organized backup directory structure (public/, private/, forks/)
+1. Create organized backup directory structure (`public/`, `private/`, `forks/`)
 2. Clone all repositories to appropriate subdirectories
 3. Update existing repositories instead of re-cloning
-4. Show real-time progress with a progress bar
-5. Provide detailed summary of backup results
+4. Show real-time progress with Rich progress bars
+5. Provide detailed summary of backup results and statistics
 
-**Directory Structure**:
+### 4. Create New Repository
+
+```bash
+python create_github_repo.py
+```
+
+Interactive mode (prompts for all details):
+
+```bash
+python create_github_repo.py
+```
+
+With command-line arguments:
+
+```bash
+python create_github_repo.py --name "MyProject" --description "My awesome project"
+python create_github_repo.py --name "PrivateRepo" --private
+python create_github_repo.py --name "NewProject" --auto-init --enable-wiki
+```
+
+Available options:
+
+- `--name`: Repository name
+- `--description`: Repository description
+- `--private`: Make repository private
+- `--auto-init`: Initialize with README
+- `--no-issues`: Disable issues
+- `--enable-wiki`: Enable wiki
+- `--enable-projects`: Enable projects
+- `--setup-remote`: Set up git remote after creation
+
+**Directory Structure for Backups**:
 
 ```text
 Backup/
 ├── public/          # Public repositories
 ├── private/         # Private repositories
 └── forks/           # Forked repositories
+```
+
+## Installation
+
+1. Clone this repository:
+
+```bash
+git clone https://github.com/TheSethRose/Repo-Tools.git
+cd Repo-Tools
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up your GitHub token:
+
+```bash
+cp .env.example .env
+# Edit .env and add your GitHub Personal Access Token
 ```
 
 ## Environment Variables
@@ -185,7 +230,7 @@ cp .env.example .env
 
 ## Example Output
 
-```
+```text
                                     GitHub Repositories                                    
 ┏━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━━┓
 ┃ Repository        ┃ Description                           ┃ Language ┃ Visibility ┃ Stars ┃ Forks ┃ Last Updated    ┃
@@ -205,8 +250,8 @@ Summary:
 
 - Never commit your GitHub token to version control
 - Use environment variables or secure secret management
-- The script validates your token before making API calls
-- Monitors API rate limits to prevent exceeding quotas
+- The scripts validate your token before making API calls
+- Monitor API rate limits to prevent exceeding quotas
 
 ## License
 

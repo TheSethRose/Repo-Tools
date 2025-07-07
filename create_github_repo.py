@@ -2,9 +2,33 @@
 """
 GitHub Repository Creation Script
 
-Creates a new GitHub repository for the Repo-Tools project.
+A dynamic script to create new GitHub repositories from the command line.
+Supports custom repository names, descriptions, and various GitHub settings.
+
+Usage:
+    python create_github_repo.py [options]
+
+Arguments:
+    --name: Repository name (optional, interactive prompt if not provided)
+    --description: Repository description (optional)
+    --private: Make repository private (default: False)
+    --auto-init: Initialize with README (default: False for existing projects)
+    --has-issues: Enable issues (default: True)
+    --has-wiki: Enable wiki (default: False)
+    --has-projects: Enable projects (default: False)
+
+Examples:
+    # Interactive mode
+    python create_github_repo.py
+    
+    # With parameters
+    python create_github_repo.py --name "MyProject" --description "My awesome project" --private
+    
+    # Initialize new project with README
+    python create_github_repo.py --name "NewProject" --auto-init
 """
 
+import argparse
 import os
 import sys
 import subprocess
@@ -14,7 +38,7 @@ from typing import Optional
 try:
     from github import Github, GithubException
     from rich.console import Console
-    from rich.prompt import Confirm
+    from rich.prompt import Confirm, Prompt
     from dotenv import load_dotenv
 except ImportError as e:
     print(f"Missing required dependency: {e}")
@@ -24,11 +48,15 @@ except ImportError as e:
 
 def create_github_repository(
     token: str,
-    repo_name: str = "Repo-Tools",
-    description: str = "Python scripts for managing GitHub repositories - listing, privacy management, and backup tools",
-    private: bool = False
+    repo_name: str,
+    description: str = "",
+    private: bool = False,
+    has_issues: bool = True,
+    has_wiki: bool = False,
+    has_projects: bool = False,
+    auto_init: bool = False
 ) -> bool:
-    """Create a new GitHub repository."""
+    """Create a new GitHub repository with specified settings."""
     console = Console()
     
     try:
@@ -37,8 +65,9 @@ def create_github_repository(
         user = github.get_user()
         
         console.print(f"Creating repository: [bold blue]{repo_name}[/bold blue]")
-        console.print(f"Description: {description}")
+        console.print(f"Description: {description or 'No description'}")
         console.print(f"Private: {private}")
+        console.print(f"Issues: {has_issues}, Wiki: {has_wiki}, Projects: {has_projects}")
         
         # Check if repository already exists
         try:
@@ -57,11 +86,11 @@ def create_github_repository(
             name=repo_name,
             description=description,
             private=private,
-            has_issues=True,
-            has_wiki=False,
+            has_issues=has_issues,
+            has_wiki=has_wiki,
             has_downloads=True,
-            has_projects=False,
-            auto_init=False  # We already have local files
+            has_projects=has_projects,
+            auto_init=auto_init
         )
         
         console.print(f"✓ Repository created successfully!")
@@ -136,7 +165,29 @@ def setup_git_remote(repo_name: str = "Repo-Tools") -> bool:
 
 
 def main():
-    """Main function to create GitHub repository and set up remote."""
+    """Main function to create GitHub repository with command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Create a new GitHub repository",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python create_github_repo.py --name "MyProject" --description "My awesome project"
+  python create_github_repo.py --name "PrivateRepo" --private
+  python create_github_repo.py --name "NewProject" --auto-init
+        """
+    )
+    
+    parser.add_argument("--name", help="Repository name")
+    parser.add_argument("--description", help="Repository description", default="")
+    parser.add_argument("--private", action="store_true", help="Make repository private")
+    parser.add_argument("--auto-init", action="store_true", help="Initialize with README")
+    parser.add_argument("--no-issues", action="store_true", help="Disable issues")
+    parser.add_argument("--enable-wiki", action="store_true", help="Enable wiki")
+    parser.add_argument("--enable-projects", action="store_true", help="Enable projects")
+    parser.add_argument("--setup-remote", action="store_true", help="Set up git remote after creation")
+    
+    args = parser.parse_args()
+    
     console = Console()
     
     # Load environment variables
@@ -153,31 +204,62 @@ def main():
     console.print("[bold blue]GitHub Repository Creation[/bold blue]")
     console.print("=" * 40)
     
-    # Ask user for repository details
-    repo_name = "Repo-Tools"
-    description = "Python scripts for managing GitHub repositories - listing, privacy management, and backup tools"
+    # Get repository details interactively if not provided
+    repo_name = args.name
+    if not repo_name:
+        repo_name = Prompt.ask("Repository name")
+        if not repo_name:
+            console.print("[bold red]Repository name is required[/bold red]")
+            sys.exit(1)
     
-    console.print(f"Repository name: {repo_name}")
-    console.print(f"Description: {description}")
+    description = args.description
+    if not description and not args.auto_init:
+        description = Prompt.ask("Repository description", default="")
     
-    # Ask if repository should be private
-    private = Confirm.ask("Make repository private?", default=False)
+    # Configure repository settings
+    private = args.private
+    if not args.private:
+        private = Confirm.ask("Make repository private?", default=False)
+    
+    has_issues = not args.no_issues
+    has_wiki = args.enable_wiki
+    has_projects = args.enable_projects
+    auto_init = args.auto_init
+    
+    # Display settings summary
+    console.print(f"\n[bold]Repository Settings:[/bold]")
+    console.print(f"Name: {repo_name}")
+    console.print(f"Description: {description or 'No description'}")
+    console.print(f"Private: {private}")
+    console.print(f"Initialize with README: {auto_init}")
+    console.print(f"Issues: {has_issues}")
+    console.print(f"Wiki: {has_wiki}")
+    console.print(f"Projects: {has_projects}")
+    
+    if not Confirm.ask("\nProceed with repository creation?", default=True):
+        console.print("Repository creation cancelled.")
+        sys.exit(0)
     
     # Create the repository
-    if create_github_repository(token, repo_name, description, private):
+    if create_github_repository(
+        token, repo_name, description, private, 
+        has_issues, has_wiki, has_projects, auto_init
+    ):
         console.print("\n[bold green]Repository created successfully![/bold green]")
         
-        # Set up git remote
-        if setup_git_remote(repo_name):
-            console.print("\n[bold green]Git remote configured![/bold green]")
-            console.print("\nNext steps:")
-            console.print("1. git add .")
-            console.print("2. git commit -m 'Initial commit: GitHub repository management tools'")
-            console.print("3. git push -u origin main")
-        else:
-            console.print("\n[bold yellow]Repository created but git remote setup failed[/bold yellow]")
-            console.print("You can manually add the remote with:")
-            console.print(f"git remote add origin git@github.com:YOUR_USERNAME/{repo_name}.git")
+        # Optionally set up git remote for existing projects
+        if args.setup_remote or (not auto_init and Confirm.ask("Set up git remote for this project?", default=True)):
+            if setup_git_remote(repo_name):
+                console.print("\n[bold green]Git remote configured![/bold green]")
+                if not auto_init:
+                    console.print("\nNext steps:")
+                    console.print("1. git add .")
+                    console.print("2. git commit -m 'Initial commit'")
+                    console.print("3. git push -u origin main")
+            else:
+                console.print("\n[bold yellow]Repository created but git remote setup failed[/bold yellow]")
+                console.print("You can manually add the remote with:")
+                console.print(f"git remote add origin git@github.com:YOUR_USERNAME/{repo_name}.git")
     else:
         console.print("\n[bold red]Failed to create repository[/bold red]")
         sys.exit(1)
